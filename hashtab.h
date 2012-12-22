@@ -1,4 +1,4 @@
-/* hashtab.h - generic hashtable implementation in C
+/* hashtab.h - Generic hashtable implementation in C
  *
  * Bailey Forrest - baileycforrest@gmail.com
  *
@@ -19,17 +19,17 @@ typedef struct htelem
 
 typedef struct hashtab
 {
-    htelem* array;
+    htelem** array;
     int asize;
     int members;
-    void (*freeElem)();
-    void (*freeKey)();
+    void (*freeElem)(void *elem);
+    void (*freeKey)(void *key);
     unsigned (*hash) (void *key);
     int (*keyEqual)(void *k1, void*k2);
 } hashtab;
 
 hashtab* ht_create(void (*freeElem)(), void (*freeKey)(),
-                   unsigned hash (*hash)(void *input));
+                   unsigned hash (*hash)(void *key));
 int ht_insert(hashtab *ht, void* key, void* elem);
 int ht_ins_htelem(hashtab *ht, htelem* htelem);
 int ht_resize(hashtab *ht);

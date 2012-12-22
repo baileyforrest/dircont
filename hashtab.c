@@ -1,4 +1,4 @@
-/* hashtab.c - generic hashtable implementation in C
+/* hashtab.c - Generic hashtable implementation in C
  *
  * Bailey Forrest - baileycforrest@gmail.com
  *
@@ -6,12 +6,14 @@
 
 #include "hashtab.h"
 
-hashtab* ht_create(void (*freeElem)(), unsigned hash (*hash)(void *input),
+// Creates a new hashtable
+hashtab* ht_create(void (*freeElem)(void *elem), void (*freeKey)(void *key),
+                   (unsigned (*hash)(void *key),
                    int (*keyEqual)(void *k1, void *k2))
 {
     if((hashtab* ht = malloc(sizeof(hashtab))) < 0)
         return NULL;
-    if((ht->array) = malloc(sizeof(char *) * HT_ARRAY_START) < 0)
+    if((ht->array) = malloc(sizeof(htelem *) * HT_ARRAY_START) < 0)
         return NULL;
 
     ht->asize = HT_ARRAY_START;
@@ -22,6 +24,7 @@ hashtab* ht_create(void (*freeElem)(), unsigned hash (*hash)(void *input),
     ht->keyEqual = keyEqual;
 }
 
+// Insert elem, key pair into hash table
 int ht_insert(hashtab *ht, void* key, void* elem)
 {
     htelem* htelem = malloc(sizeof(htelem));
@@ -34,6 +37,7 @@ int ht_insert(hashtab *ht, void* key, void* elem)
     return 0;
 }
 
+// Insert htelem struct into hash table
 int ht_ins_htelem(hashtab *ht, htelem* htelem)
 {
     unsigned hash = ht->hash(htelem->key);
@@ -45,6 +49,8 @@ int ht_ins_htelem(hashtab *ht, htelem* htelem)
     {
         if(ht->keyEqual(p->key, htelem->key))
         {
+            ht->freeElem(p->elem);
+            ht->freeKey(htelem->key);
             p->elem = htelem->elem;
             free(htelem);
             return 0;
@@ -54,7 +60,7 @@ int ht_ins_htelem(hashtab *ht, htelem* htelem)
     // Not found in hash table, add to front of linked list
     p = start;
     ht->array[hash] = htelem;
-    start->next = p;
+    htelem->next = p;
     ht->members++;
 
     if((float)ht->members / (float)ht->asize > MAX_LOAD_FACTOR)
@@ -71,7 +77,7 @@ int ht_resize(hashtab *ht)
     int oldasize = ht->asize;
     ht->asize = ht->asize * 2;
     ht->members = 0;
-    if((ht->array = malloc(sizeof(htelem) * ht->asize)) < 0)
+    if((ht->array = malloc(sizeof(htelem *) * ht->asize)) < 0)
         return -1;
 
     int i;
@@ -88,6 +94,7 @@ int ht_resize(hashtab *ht)
     return 0;
 }
 
+// Remove htelem corresponding to key in the hashtable
 int ht_remove(hashtab *ht, void* key)
 {
     hash = ht->hash(key);
@@ -110,6 +117,7 @@ int ht_remove(hashtab *ht, void* key)
 
             return 0;
         }
+        prev = p;
     }
 
     return -1;
