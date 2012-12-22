@@ -14,6 +14,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <limits.h>
 #include "hashtab.h"
 
 #define MAXLINE 128

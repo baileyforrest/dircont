@@ -12,7 +12,7 @@ const char* executableFile = "Executable File";
 const char* noExtension = "No Extension";
 
 static int dircount = 0;
-static int limit = -1;
+static int limit = INT_MAX;
 
 int main(int argc, char** argv)
 {
@@ -32,7 +32,7 @@ int main(int argc, char** argv)
         case 'n':
             if((limit = atoi(optarg)) <= 0)
             {
-                fprintf(stderr, "invalid number for [-n]\n", argv[0]);
+                fprintf(stderr, "invalid number for [-n]\n");
                 exit(EXIT_FAILURE);
             }
             break;
@@ -231,7 +231,7 @@ void displayResults(hashtab *ht, char* dir, int human)
         if(limit > 0)
         {
             printf("%-15s %-5d %20s %3.2f %% \n", fi->name, fi->count, hsize,
-                   (float)fi->count / (float)totalfiles);
+                   (float)fi->count * 100.0 / (float)totalfiles);
         }
         
         htelem *next = p->next;
