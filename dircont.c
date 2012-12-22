@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     doDirCont(ht, pDir, dir);
     closedir(pDir);
 
-    displayResults(ht, dir);
+    displayResults(ht, dir, human);
     
     return 0;
 }
@@ -90,8 +90,10 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
             if(!strcmp(pDirent->d_name, ".") && 
                !strcmp(pDirent->d_name, ".."))
             {
-                if((DIR *npDir = opendir(newPath)) != NULL)
+                DIR* npDir;
+                if((npDir = opendir(newPath)) != NULL)
                     doDirCont(ht, npDir, newPath);
+                closedir(npDir);
             }
         }
         else
@@ -107,7 +109,7 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
                 else
                 {
                     type = malloc(strlen(pDirent->d_name) + 1);
-                    strcpy(type, pDirent->dname);
+                    strcpy(type, pDirent->d_name);
                 }
                     
             }
@@ -133,11 +135,11 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
     }
 }
 
-void displayResults(hashtab *ht, char* dir)
+void displayResults(hashtab *ht, char* dir, int human)
 {
     htelem *elemlist = toList(ht);
     htelem *sorted = NULL;
-    htelem *p, prev;
+    htelem *p, *prev;
 
     unsigned long totalsize = 0;
     unsigned totalfiles = 0;
@@ -147,7 +149,7 @@ void displayResults(hashtab *ht, char* dir)
     //insertion sort into sorted list (greatest to least)
     while(elemlist != NULL)
     {
-        fi = (fileInfo *)elemlist->elem
+        fi = (fileInfo *)elemlist->elem;
         int count = fi->count;
         totalsize += fi->size;
         totalfiles += fi->count;
@@ -166,7 +168,7 @@ void displayResults(hashtab *ht, char* dir)
             {
                 if(count > ((fileInfo *)p->elem)->count)
                 {
-                    if(p = prev) // begining of list
+                    if(p == prev) // begining of list
                     {
                         sorted = elemlist;
                         elemlist = elemlist->next;
@@ -186,13 +188,16 @@ void displayResults(hashtab *ht, char* dir)
             }
         }
     }
+
+    //need to add nonhuman mode
+    human = human;
     
     printf("File Contents of %s\n", dir);
     for(p = sorted; p != NULL;)
     {
         fi = (fileInfo *)p->elem;
-        printf("%10s %5d %20d %2.2f\n", fi->name, fi->count, fi->size,
-               (float)fi.count / (float)totalfiles);
+        printf("%10s %5d %20lu %2.2f\n", fi->name, fi->count, fi->size,
+               (float)fi->count / (float)totalfiles);
         
         htelem *next = p->next;
 
@@ -204,10 +209,8 @@ void displayResults(hashtab *ht, char* dir)
         p = next;
     }
 
-    printf("%d files in %d directories (%d B)", totalfiles, dircount,
+    printf("%d files in %d directories (%lu B)", totalfiles, dircount,
            totalsize);
-
-    return 0;
 }
 
 void freeFileInfo(fileInfo *fi)

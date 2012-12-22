@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
 #include "hashtab.h"
 
 #define MAXLINE 128
@@ -25,7 +27,7 @@ typedef struct fileInfo
 } fileInfo;
 
 void doDirCont(hashtab *ht, DIR *pDirent, char* path);
-void displayResults(hashtab *ht);
+void displayResults(hashtab *ht, char *dir, int human);
 void freeFileInfo(fileInfo *fi);
 void freeName(char *name);
 int streql(char *s1, char *s2);
