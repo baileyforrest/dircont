@@ -8,12 +8,13 @@
 
 // Creates a new hashtable
 hashtab* ht_create(void (*freeElem)(void *elem), void (*freeKey)(void *key),
-                   (unsigned (*hash)(void *key),
+                   unsigned (*hash)(void *key),
                    int (*keyEqual)(void *k1, void *k2))
 {
-    if((hashtab* ht = malloc(sizeof(hashtab))) < 0)
+    hashtab *ht;
+    if((ht = malloc(sizeof(hashtab))) == NULL)
         return NULL;
-    if((ht->array) = malloc(sizeof(htelem *) * HT_ARRAY_START) < 0)
+    if((ht->array = malloc(sizeof(htelem *) * HT_ARRAY_START)) == NULL)
         return NULL;
 
     ht->asize = HT_ARRAY_START;
@@ -22,12 +23,16 @@ hashtab* ht_create(void (*freeElem)(void *elem), void (*freeKey)(void *key),
     ht->freeKey = freeKey;
     ht->hash = hash;
     ht->keyEqual = keyEqual;
+
+    return ht;
 }
 
 // Insert elem, key pair into hash table
 int ht_insert(hashtab *ht, void* key, void* elem)
 {
-    htelem* htelem = malloc(sizeof(htelem));
+    htelem* htelem;
+    if((htelem = malloc(sizeof(htelem))) == NULL)
+       return -1;
     htelem->key = key;
     htelem->elem = elem;
 
@@ -38,13 +43,13 @@ int ht_insert(hashtab *ht, void* key, void* elem)
 }
 
 // Insert htelem struct into hash table
-int ht_ins_htelem(hashtab *ht, htelem* htelem)
+int ht_ins_htelem(hashtab *ht, htelem *htelem)
 {
     unsigned hash = ht->hash(htelem->key);
     hash = hash % ht->asize;
 
-    htelem *p;
-    htelem *start = ht->array[hash];
+    struct htelem *p;
+    struct htelem *start = ht->array[hash];
     for(p = start; p != NULL; p = p->next)
     {
         if(ht->keyEqual(p->key, htelem->key))
@@ -73,11 +78,11 @@ int ht_ins_htelem(hashtab *ht, htelem* htelem)
 // Load factor too high, double number of buckets
 int ht_resize(hashtab *ht)
 {
-    htelem* aold = ht->array;
+    htelem **aold = ht->array;
     int oldasize = ht->asize;
     ht->asize = ht->asize * 2;
     ht->members = 0;
-    if((ht->array = malloc(sizeof(htelem *) * ht->asize)) < 0)
+    if((ht->array = malloc(sizeof(htelem *) * ht->asize)) == NULL)
         return -1;
 
     int i;
@@ -97,7 +102,7 @@ int ht_resize(hashtab *ht)
 // Remove htelem corresponding to key in the hashtable
 int ht_remove(hashtab *ht, void* key)
 {
-    hash = ht->hash(key);
+    unsigned hash = ht->hash(key);
     hash = hash % ht->asize;
 
     htelem* p;
@@ -126,11 +131,11 @@ int ht_remove(hashtab *ht, void* key)
 // Returns pointer to element given key
 void *ht_get(hashtab *ht, void* key)
 {
-    unsigend hash = ht->hash(key);
+    unsigned hash = ht->hash(key);
     hash = hash % ht->asize;
     
     htelem *p;
-    for(p = hash->array[hash]; p != NULL; p = p->next)
+    for(p = ht->array[hash]; p != NULL; p = p->next)
     {
         if(ht->keyEqual(key, p->key))
             return p->elem;
@@ -159,4 +164,36 @@ int ht_free(hashtab *ht)
     free(ht);
 
     return 0;
+}
+
+//creates linked list of htelem from the hashtable
+//frees the ht structure
+htelem *toList(hashtab *ht)
+{
+    htelem *head = NULL;
+    htelem *tail = NULL;
+    int i;
+    htelem *p;
+    for(i = 0; i < ht->asize; i++)
+    {
+        for(p = ht->array[i]; p != NULL; p = p->next)
+        {
+            if(head == NULL)
+            {
+                head = p;
+                tail = p;
+            }
+            else
+            {
+                tail->next = p;
+                tail = p;
+            }
+        }
+    }
+    tail->next = NULL;
+
+    free(ht->array);
+    free(ht);
+
+    return head;
 }
