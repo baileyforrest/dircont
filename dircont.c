@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     }
 
     hashtab *ht = ht_create(&freeFileInfo, &freeName, &hash_sstring, streql);
-                        
+
     doDirCont(ht, pDir, dir);
     closedir(pDir);
 
@@ -85,11 +85,11 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
 
         if(s.st_mode & S_IFDIR) // is directory
         {
-            dircount++;
             // Prevent infinite loops on ., ..
-            if(!strcmp(pDirent->d_name, ".") && 
-               !strcmp(pDirent->d_name, ".."))
+            if(!streql(pDirent->d_name, ".") && 
+               !streql(pDirent->d_name, ".."))
             {
+                dircount++;
                 DIR* npDir;
                 if((npDir = opendir(newPath)) != NULL)
                     doDirCont(ht, npDir, newPath);
@@ -98,7 +98,7 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
         }
         else
         {
-            char *type = getExt(newPath);
+            char *type = getExt(pDirent->d_name);
             if(type == NULL)
             {
                 if((s.st_mode & S_IEXEC) != 0) // executable file
@@ -108,8 +108,15 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
                 }
                 else
                 {
-                    type = malloc(strlen(pDirent->d_name) + 1);
-                    strcpy(type, pDirent->d_name);
+                    type = malloc(MAX_EXT);//strlen(pDirent->d_name) + 1);
+                    if(strlen(pDirent->d_name) < MAX_EXT)
+                        strcpy(type, pDirent->d_name);
+                    else
+                    {
+                        strncpy(type, pDirent->d_name, MAX_EXT - 4);
+                        type[MAX_EXT - 3] = '\0';
+                        strcat(type, "...");
+                    }
                 }
                     
             }
@@ -129,6 +136,8 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
                 fi->size = s.st_size;
                 fi->name = type;
                 fi->count = 1;
+
+                ht_insert(ht, type, fi);
             }
         }
         free(newPath);
@@ -179,37 +188,43 @@ void displayResults(hashtab *ht, char* dir, int human)
                     {
                         prev->next = elemlist;
                         elemlist = elemlist->next;
-                        prev->next->next = p->next;
+                        prev->next->next = p;
                         break;
                     }
                 }
                 prev = p;
                 p = p->next;
             }
+            //got to the end of the list (its the smallest)
+            if(p == NULL)
+            {
+                prev->next = elemlist;
+                elemlist = elemlist->next;
+                prev->next->next = NULL;
+            }
         }
     }
-
     //need to add nonhuman mode
     human = human;
     
-    printf("File Contents of %s\n", dir);
+    printf("File Contents of %s\n\n", dir);
     for(p = sorted; p != NULL;)
     {
         fi = (fileInfo *)p->elem;
-        printf("%10s %5d %20lu %2.2f\n", fi->name, fi->count, fi->size,
+        printf("%-15s %-5d %10lu %3.2f %% \n", fi->name, fi->count, fi->size,
                (float)fi->count / (float)totalfiles);
         
         htelem *next = p->next;
 
         free(fi->name);
         free(p->elem);
-        free(p->key);
+        //free(p->key);
         free(p);
 
         p = next;
     }
 
-    printf("%d files in %d directories (%lu B)", totalfiles, dircount,
+    printf("%d files in %d directories (%lu B)\n", totalfiles, dircount,
            totalsize);
 }
 

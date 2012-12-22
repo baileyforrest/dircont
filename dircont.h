@@ -17,6 +17,7 @@
 #include "hashtab.h"
 
 #define MAXLINE 128
+#define MAX_EXT 15
 
 typedef struct fileInfo
 {

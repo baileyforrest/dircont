@@ -14,7 +14,7 @@ hashtab* ht_create(void (*freeElem)(void *elem), void (*freeKey)(void *key),
     hashtab *ht;
     if((ht = malloc(sizeof(hashtab))) == NULL)
         return NULL;
-    if((ht->array = malloc(sizeof(htelem *) * HT_ARRAY_START)) == NULL)
+    if((ht->array = calloc(HT_ARRAY_START, sizeof(htelem *))) == NULL)
         return NULL;
 
     ht->asize = HT_ARRAY_START;
@@ -31,7 +31,7 @@ hashtab* ht_create(void (*freeElem)(void *elem), void (*freeKey)(void *key),
 int ht_insert(hashtab *ht, void* key, void* elem)
 {
     htelem* htelem;
-    if((htelem = malloc(sizeof(htelem))) == NULL)
+    if((htelem = malloc(sizeof(struct htelem))) == NULL)
        return -1;
     htelem->key = key;
     htelem->elem = elem;
@@ -82,7 +82,7 @@ int ht_resize(hashtab *ht)
     int oldasize = ht->asize;
     ht->asize = ht->asize * 2;
     ht->members = 0;
-    if((ht->array = malloc(sizeof(htelem *) * ht->asize)) == NULL)
+    if((ht->array = calloc(ht->asize, sizeof(htelem *))) == NULL)
         return -1;
 
     int i;
@@ -190,7 +190,8 @@ htelem *toList(hashtab *ht)
             }
         }
     }
-    tail->next = NULL;
+    if(tail != NULL)
+        tail->next = NULL;
 
     free(ht->array);
     free(ht);
