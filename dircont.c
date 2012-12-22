@@ -17,12 +17,13 @@ int main(int argc, char** argv)
 {
     int human = 1;
     int opt;
-    while((opt = getopt(argc, argv, "hH:") != -1))
+    while((opt = getopt(argc, argv, "hH")) != -1)
     {
         switch(opt)
         {
         case 'h':
             printf(usage, argv[0]);
+            exit(0);
             break;
         case 'H':
             human = 0;
@@ -161,6 +162,7 @@ void displayResults(hashtab *ht, char* dir, int human)
     unsigned totalfiles = 0;
 
     fileInfo *fi;
+    char* hsize;
 
     //insertion sort into sorted list (greatest to least)
     while(elemlist != NULL)
@@ -211,14 +213,12 @@ void displayResults(hashtab *ht, char* dir, int human)
             }
         }
     }
-    //need to add nonhuman mode
-    human = human;
-    
+
     printf("File Contents of '%s':\n", dir);
     for(p = sorted; p != NULL;)
     {
         fi = (fileInfo *)p->elem;
-        char *hsize = humanFormat(fi->size, human);
+        hsize = humanFormat(fi->size, human);
         printf("%-15s %-5d %20s %3.2f %% \n", fi->name, fi->count, hsize,
                (float)fi->count / (float)totalfiles);
         
@@ -233,8 +233,9 @@ void displayResults(hashtab *ht, char* dir, int human)
         p = next;
     }
 
-    printf("%d files in %d directories (%lu B)\n", totalfiles, dircount,
-           totalsize);
+    hsize = humanFormat(totalsize, human);
+    printf("%d files in %d directories (%s)\n", totalfiles, dircount, hsize);
+    free(hsize);
 }
 
 void freeFileInfo(fileInfo *fi)
@@ -300,7 +301,7 @@ char *humanFormat(unsigned long size, int human)
         sprintf(buf, "%.1f%s", dsize, unit);
     }
     else
-        sprintf(buf, "%lu B", size);
+        sprintf(buf, "%luB", size);
 
     return buf;
 }
