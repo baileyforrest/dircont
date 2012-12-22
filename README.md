@@ -10,3 +10,5 @@ of files.
 Essentially a C version of pythonViewFileContents
 
 dircont -H <directory> - non Human readable format
+
+dircont -n <num> <dir> - limit list to num entries
