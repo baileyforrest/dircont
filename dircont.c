@@ -9,6 +9,7 @@
 
 const char* usage = "Usage: %s [-hH] <directory>\n";
 const char* executableFile = "Executable File";
+const char* noExtension = "No Extension";
 
 static int dircount = 0;
 
@@ -38,10 +39,12 @@ int main(int argc, char** argv)
         dir = argv[argc - 1];
     else
     {
+        printf("Enter Directory to count files: ");
         dir = malloc(MAXLINE);
         if(fgets(dir, MAXLINE, stdin) == NULL)
             exit(EXIT_FAILURE);
         dir[MAXLINE - 1] = '\0';
+        dir[strlen(dir) - 1] = '\0';
     }
 
     DIR *pDir;
@@ -106,8 +109,11 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
                     type = malloc(strlen(executableFile) + 1);
                     strcpy(type, executableFile);
                 }
-                else
+                else //no extension, might change this to give file type
                 {
+                    type = malloc(strlen(noExtension) + 1);
+                    strcpy(type, noExtension);
+                    /*
                     type = malloc(MAX_EXT);//strlen(pDirent->d_name) + 1);
                     if(strlen(pDirent->d_name) < MAX_EXT)
                         strcpy(type, pDirent->d_name);
@@ -117,6 +123,7 @@ void doDirCont(hashtab *ht, DIR *pDir, char *path)
                         type[MAX_EXT - 3] = '\0';
                         strcat(type, "...");
                     }
+                    */
                 }
                     
             }
@@ -207,15 +214,17 @@ void displayResults(hashtab *ht, char* dir, int human)
     //need to add nonhuman mode
     human = human;
     
-    printf("File Contents of %s\n\n", dir);
+    printf("File Contents of '%s':\n", dir);
     for(p = sorted; p != NULL;)
     {
         fi = (fileInfo *)p->elem;
-        printf("%-15s %-5d %10lu %3.2f %% \n", fi->name, fi->count, fi->size,
+        char *hsize = humanFormat(fi->size, human);
+        printf("%-15s %-5d %20s %3.2f %% \n", fi->name, fi->count, hsize,
                (float)fi->count / (float)totalfiles);
         
         htelem *next = p->next;
 
+        free(hsize);
         free(fi->name);
         free(p->elem);
         //free(p->key);
@@ -256,4 +265,42 @@ char* getExt(char* name)
     strcpy(ext, dot);
 
     return ext;
+}
+
+char *humanFormat(unsigned long size, int human)
+{
+    char *buf;
+
+    char *unit;
+    int divisions = 0;
+
+    if((buf = malloc(SIZE_LEN)) == NULL)
+        exit(EXIT_FAILURE);
+
+    if(human)
+    {
+        double dsize = (double)size;
+        while(size / 1024 > 0)
+        {
+            dsize /= 1024;
+            size /= 1024;
+            divisions++;
+        }
+
+        switch(divisions)
+        {
+        case 0: unit = "B"; break;
+        case 1: unit = "KiB"; break;
+        case 2: unit = "MiB"; break;
+        case 3: unit = "GiB"; break;
+        case 4: unit = "TiB"; break;
+        default: unit = "too_big"; break;
+        }
+
+        sprintf(buf, "%.1f%s", dsize, unit);
+    }
+    else
+        sprintf(buf, "%lu B", size);
+
+    return buf;
 }

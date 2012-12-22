@@ -18,6 +18,7 @@
 
 #define MAXLINE 128
 #define MAX_EXT 15
+#define SIZE_LEN 25
 
 typedef struct fileInfo
 {
@@ -32,7 +33,8 @@ void displayResults(hashtab *ht, char *dir, int human);
 void freeFileInfo(fileInfo *fi);
 void freeName(char *name);
 int streql(char *s1, char *s2);
-char* getExt(char* name);
+char *getExt(char* name);
+char *humanFormat(unsigned long size, int human);
 
 #endif
 
