@@ -7,17 +7,18 @@
 #include "dircont.h"
 #include "hashes.h"
 
-const char* usage = "Usage: %s [-hH] <directory>\n";
+const char* usage = "Usage: %s [-hH] [-n] <limit> <directory>\n";
 const char* executableFile = "Executable File";
 const char* noExtension = "No Extension";
 
 static int dircount = 0;
+static int limit = -1;
 
 int main(int argc, char** argv)
 {
     int human = 1;
     int opt;
-    while((opt = getopt(argc, argv, "hH")) != -1)
+    while((opt = getopt(argc, argv, "hHn:")) != -1)
     {
         switch(opt)
         {
@@ -27,6 +28,13 @@ int main(int argc, char** argv)
             break;
         case 'H':
             human = 0;
+            break;
+        case 'n':
+            if((limit = atoi(optarg)) <= 0)
+            {
+                fprintf(stderr, "invalid number for [-n]\n", argv[0]);
+                exit(EXIT_FAILURE);
+            }
             break;
         default:
             fprintf(stderr, usage, argv[0]);
@@ -219,8 +227,12 @@ void displayResults(hashtab *ht, char* dir, int human)
     {
         fi = (fileInfo *)p->elem;
         hsize = humanFormat(fi->size, human);
-        printf("%-15s %-5d %20s %3.2f %% \n", fi->name, fi->count, hsize,
-               (float)fi->count / (float)totalfiles);
+
+        if(limit > 0)
+        {
+            printf("%-15s %-5d %20s %3.2f %% \n", fi->name, fi->count, hsize,
+                   (float)fi->count / (float)totalfiles);
+        }
         
         htelem *next = p->next;
 
@@ -231,6 +243,7 @@ void displayResults(hashtab *ht, char* dir, int human)
         free(p);
 
         p = next;
+        limit--;
     }
 
     hsize = humanFormat(totalsize, human);
